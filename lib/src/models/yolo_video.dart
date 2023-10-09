@@ -2,9 +2,11 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_vision/flutter_vision.dart';
+import 'package:pr_alpr_watchmen/src/pages/camera_detection_page.dart';
 
 class YoloVideo extends StatefulWidget {
   final FlutterVision vision;
+
   const YoloVideo({Key? key, required this.vision}) : super(key: key);
 
   @override
@@ -47,7 +49,6 @@ class _YoloVideoState extends State<YoloVideo> {
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
     if (!isLoaded) {
       return const Scaffold(
         body: Center(
@@ -55,52 +56,16 @@ class _YoloVideoState extends State<YoloVideo> {
         ),
       );
     }
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        AspectRatio(
-          aspectRatio: controller.value.aspectRatio,
-          child: CameraPreview(
-            controller,
-          ),
-        ),
-        ...displayBoxesAroundRecognizedObjects(size),
-        Positioned(
-          bottom: 75,
-          width: MediaQuery.of(context).size.width,
-          child: Container(
-            height: 80,
-            width: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                  width: 5, color: Colors.white, style: BorderStyle.solid),
-            ),
-            child: isDetecting
-                ? IconButton(
-              onPressed: () async {
-                stopDetection();
-              },
-              icon: const Icon(
-                Icons.stop,
-                color: Colors.red,
-              ),
-              iconSize: 50,
-            )
-                : IconButton(
-              onPressed: () async {
-                await startDetection();
-              },
-              icon: const Icon(
-                Icons.play_arrow,
-                color: Colors.white,
-              ),
-              iconSize: 50,
-            ),
-          ),
-        ),
-      ],
+    return Scaffold(
+      body: CameraDetection(
+        controller: controller,
+        isDetecting: isDetecting,
+        onSave: displayBoxesAroundRecognizedObjects,
+        startDetection: startDetection,
+        stopDetection: stopDetection,
+      ),
     );
+
   }
 
   Future<void> loadYoloModel() async {

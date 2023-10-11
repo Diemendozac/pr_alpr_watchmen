@@ -1,24 +1,28 @@
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class CameraDetection extends StatelessWidget {
   final CameraController controller;
   final bool isDetecting;
-  final List<Widget> Function(Size) onSave;
+  final Future<Uint8List> Function(Size) onExtract;
+  final List<Widget> Function(Size) onDetection;
   final Future<void> Function() stopDetection;
   final Future<void> Function() startDetection;
 
   const CameraDetection(
       {required this.controller,
       required this.isDetecting,
-      required this.onSave,
+      required this.onDetection,
       required this.startDetection,
       required this.stopDetection,
+      required this.onExtract,
       super.key});
 
   @override
   Widget build(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
+    onExtract(size);
 
     return Stack(
       fit: StackFit.expand,
@@ -29,7 +33,7 @@ class CameraDetection extends StatelessWidget {
             controller,
           ),
         ),
-        ...onSave(size),
+        ...onDetection(size),
         Positioned(
           bottom: 75,
           width: MediaQuery.of(context).size.width,

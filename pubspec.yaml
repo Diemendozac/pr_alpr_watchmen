@@ -37,8 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter_vision: ^1.1.4
   camera: ^0.10.5+5
-  image_picker: ^1.0.4
-  flutter_speed_dial: ^7.0.0
+  native_image_cropper: ^0.3.1
 
 dev_dependencies:
   flutter_test:
@@ -65,7 +64,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/.
-  #  - assets/yolov8.tflite
+  #  - assets/
   #  - assets/labels.txt
 
   # An image asset can refer to one or more resolution-specific "variants", see

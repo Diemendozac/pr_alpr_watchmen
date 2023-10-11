@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_vision/flutter_vision.dart';
+import 'package:native_image_cropper/native_image_cropper.dart';
+
 import 'package:pr_alpr_watchmen/src/pages/camera_detection_page.dart';
 
 class YoloVideo extends StatefulWidget {
@@ -60,9 +64,10 @@ class _YoloVideoState extends State<YoloVideo> {
       body: CameraDetection(
         controller: controller,
         isDetecting: isDetecting,
-        onSave: displayBoxesAroundRecognizedObjects,
+        onDetection: displayBoxesAroundRecognizedObjects,
         startDetection: startDetection,
         stopDetection: stopDetection,
+        onExtract: extractROI
       ),
     );
 
@@ -71,7 +76,7 @@ class _YoloVideoState extends State<YoloVideo> {
   Future<void> loadYoloModel() async {
     await widget.vision.loadYoloModel(
         labels: 'assets/labels.txt',
-        modelPath: 'assets/yolov82.tflite',
+        modelPath: 'assets/best_float16.tflite',
         modelVersion: "yolov8",
         numThreads: 2,
         useGpu: true);
@@ -119,12 +124,15 @@ class _YoloVideoState extends State<YoloVideo> {
 
   List<Widget> displayBoxesAroundRecognizedObjects(Size screen) {
     if (yoloResults.isEmpty) return [];
+
+
     double factorX = screen.width / (cameraImage?.height ?? 1);
     double factorY = screen.height / (cameraImage?.width ?? 1);
 
     Color colorPick = const Color.fromARGB(255, 50, 233, 30);
 
     return yoloResults.map((result) {
+
       return Positioned(
         left: result["box"][0] * factorX,
         top: result["box"][1] * factorY,
@@ -146,5 +154,35 @@ class _YoloVideoState extends State<YoloVideo> {
         ),
       );
     }).toList();
+  }
+
+
+  Future<MemoryImage> extractROI (Size screen) async {
+
+    Uint8List croppedBytes = Uint8List(1);
+
+    double factorX = screen.width / (cameraImage?.height ?? 1);
+    double factorY = screen.height / (cameraImage?.width ?? 1);
+
+    dynamic result = yoloResults[0];
+
+    List<Uint8List>? cameraScreenResult = cameraImage?.planes.map((plane) => plane.bytes).toList();
+
+    if(cameraScreenResult == null) return MemoryImage(croppedBytes);
+
+    croppedBytes = await NativeImageCropper.cropRect(
+      bytes: cameraScreenResult[0],
+      x: result["box"][0] * factorX,
+      y: result["box"][1] * factorY,
+      width: (result["box"][2] - result["box"][0]) * factorX,
+      height: (result["box"][3] - result["box"][1]) * factorY,
+    );
+
+    var image = MemoryImage(croppedBytes);
+
+    return image;
+
+
+
   }
 }

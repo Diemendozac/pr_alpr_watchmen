@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_vision/flutter_vision.dart';
 import 'package:pr_alpr_watchmen/src/models/yolo_video.dart';
 import 'package:pr_alpr_watchmen/src/pages/plate_scanner_page.dart';
+import 'package:pr_alpr_watchmen/src/utils/image_cropper.dart';
 
 enum Options { none, imagev5, imagev8, imagev8seg, frame, tesseract, vision }
 
@@ -49,7 +50,7 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       routes: {
         'home' : (BuildContext context) => const PlateScannerPage(),
-        'yolo' : (BuildContext context) => YoloVideo(vision: vision)
+        'yolo' : (BuildContext context) => YoloVideo(vision: vision),
       },
     );
   }

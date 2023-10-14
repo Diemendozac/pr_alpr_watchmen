@@ -1,11 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class CameraDetection extends StatelessWidget {
   final CameraController controller;
   final bool isDetecting;
-  final Future<Uint8List> Function(Size) onExtract;
+  //final String? Function(Size) onExtract;
   final List<Widget> Function(Size) onDetection;
   final Future<void> Function() stopDetection;
   final Future<void> Function() startDetection;
@@ -16,13 +17,13 @@ class CameraDetection extends StatelessWidget {
       required this.onDetection,
       required this.startDetection,
       required this.stopDetection,
-      required this.onExtract,
+      //required this.onExtract,
       super.key});
 
   @override
   Widget build(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
-    onExtract(size);
+    //print(onExtract(size));
 
     return Stack(
       fit: StackFit.expand,

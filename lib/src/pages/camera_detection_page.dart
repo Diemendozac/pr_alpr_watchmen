@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class CameraDetection extends StatelessWidget {
   final CameraController controller;
   final bool isDetecting;
-  //final String? Function(Size) onExtract;
+  //final Widget Function(Size) onExtract;
   final List<Widget> Function(Size) onDetection;
   final Future<void> Function() stopDetection;
   final Future<void> Function() startDetection;
@@ -35,6 +35,7 @@ class CameraDetection extends StatelessWidget {
           ),
         ),
         ...onDetection(size),
+        //onExtract(size),
         Positioned(
           bottom: 75,
           width: MediaQuery.of(context).size.width,

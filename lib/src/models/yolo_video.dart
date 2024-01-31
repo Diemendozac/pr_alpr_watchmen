@@ -1,14 +1,10 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_vision/flutter_vision.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:image/image.dart' as img;
 
 
 import 'package:pr_alpr_watchmen/src/pages/camera_detection_page.dart';
@@ -34,6 +30,7 @@ class _YoloVideoState extends State<YoloVideo> {
   bool isDetecting = false;
   final ImageCropper imageCropper = ImageCropper();
   final PlateReader plateReader = PlateReader();
+  String plateString = 'Nothing';
 
   @override
   void initState() {
@@ -77,7 +74,7 @@ class _YoloVideoState extends State<YoloVideo> {
         onDetection: displayBoxesAroundRecognizedObjects,
         startDetection: startDetection,
         stopDetection: stopDetection,
-        //onExtract: getPlateCharacters
+        //onExtract: getPlateDetected
       ),
     );
 
@@ -135,7 +132,7 @@ class _YoloVideoState extends State<YoloVideo> {
   List<Widget> displayBoxesAroundRecognizedObjects(Size screen) {
     if (yoloResults.isEmpty) return [];
 
-    print(getPlateCharacters(screen));
+    getPlateCharacters(screen);
 
 
     double factorX = screen.width / (cameraImage?.height ?? 1);
@@ -156,7 +153,7 @@ class _YoloVideoState extends State<YoloVideo> {
             border: Border.all(color: Colors.pink, width: 2.0),
           ),
           child: Text(
-            "${result['tag']} ${(result['box'][4] * 100).toStringAsFixed(0)}%",
+            "$plateString ${(result['box'][4] * 100).toStringAsFixed(0)}%",
             style: TextStyle(
               background: Paint()..color = colorPick,
               color: Colors.white,
@@ -169,131 +166,30 @@ class _YoloVideoState extends State<YoloVideo> {
   }
 
   Future<String?> getPlateCharacters (Size screen)  async {
+    if (yoloResults.isEmpty) return 'No Yoloresults';
 
-    if(yoloResults.isEmpty) return 'No Yoloresults';
-    if(cameraImage == null) return 'null cameraImage';
+    final WriteBuffer allBytes = WriteBuffer();
+    for (final Plane plane in cameraImage!.planes) {
+      allBytes.putUint8List(plane.bytes);
+    }
+    final bytes = allBytes
+        .done()
+        .buffer
+        .asUint8List();
 
-    List<dynamic>? croppedImage = imageCropper.extractRoi(cameraImage!, screen, yoloResults);
+    //List<dynamic> croppedImage = imageCropper.cropCameraImagev2(cameraImage!, yoloResults[0]);
 
-    if( croppedImage == null) return 'null croppedImage';
+    Size cropSize = Size(
+        cameraImage!.width.toDouble(), cameraImage!.height.toDouble());
 
-    Uint8List image = cameraImage!.planes.first.bytes;
-
-    InputImage inputImage = plateReader.buildInputImageFromBytes(cameraImage!);
+    InputImage inputImage = plateReader.buildInputImageFromBytes(
+        bytes, cropSize);
 
     String? plateData = await plateReader.getPlateData(inputImage);
 
+    plateString = plateData;
+
     return plateData;
-
   }
-
-
-
-
-
 
 }
-
-/*Image extractROI (Size screen) {
-
-    Uint8List croppedBytes = Uint8List(1);
-    double factorX = screen.width / (cameraImage?.height ?? 1);
-    double factorY = screen.height / (cameraImage?.width ?? 1);
-
-    if(yoloResults.isEmpty) return const Image(image: AssetImage('assets/test_image.png'),);
-
-    final result = yoloResults[0];
-
-    List<Uint8List>? cameraScreenResult = cameraImage?.planes.map((plane) => plane.bytes).toList();
-
-    if(cameraScreenResult == null) return const Image(image: AssetImage('assets/test_image.png'),);
-
-    croppedBytes = cameraScreenResult[0];
-
-    int x = (result["box"][0] * factorX).round();
-    int width = ((result["box"][2] - result["box"][0]) * factorX).round();
-
-    NativeImageCropperExample nativeImageCropper = NativeImageCropperExample();
-    final resultImage = nativeImageCropper.cropRect(bytes: croppedBytes,
-        x: x,
-        y: (result["box"][1] * factorY).round(),
-        width: width,
-        height: ((result["box"][3] - result["box"][1]) * factorY).round()
-    );
-
-    print('checkpoint');
-    ClipRect(child:Image.memory(resultImage as Uint8List), clipper: ,);
-    return Image.memory(resultImage as Uint8List);
-
-  }
-
-
-   */
-/*
-  Uint8List? extractPlate (Size screen) {
-
-
-
-    Uint8List? cameraScreenResult = cameraImage?.planes.first.bytes;
-
-    if(cameraScreenResult == null) return null;
-
-    img.Image? testImage = img.decodeImage(cameraScreenResult);
-
-    if(testImage == null) return null;
-
-    final result = yoloResults[0];
-    double factorX = screen.width / (cameraImage?.height ?? 1);
-    double factorY = screen.height / (cameraImage?.width ?? 1);
-
-    CameraImage.cropCameraImage;
-
-    final resultImage = img.copyCrop(
-        testImage,
-        x: (result["box"][0] * factorX).toInt(),
-        y: (result["box"][1] * factorY).toInt(),
-        width: ((result["box"][2] - result["box"][0]) * factorX).toInt(),
-        height: ((result["box"][3] - result["box"][1]) * factorY).toInt()
-    );
-
-    return Uint8List.fromList(img.encodePng(resultImage));
-
-  }
-  */
-/*Uint8List? cropCameraImage(Size screen) {
-
-    if(yoloResults.isEmpty) return null;
-
-    final plateResult = yoloResults[0];
-
-    double factorX = screen.width / (cameraImage?.height ?? 1);
-    double factorY = screen.height / (cameraImage?.width ?? 1);
-
-    int x= (plateResult["box"][0] ).toInt();
-    int y=(plateResult["box"][1] ).toInt();
-    int width=((plateResult["box"][2] - plateResult["box"][0]) ).toInt();
-    int height= ((plateResult["box"][3] - plateResult["box"][1]) ).toInt();
-
-    if (x < 0 || y < 0 || x + width > cameraImage!.width || y + height > cameraImage!.height) {
-      throw ArgumentError("Las coordenadas de la ROI están fuera de los límites de la imagen.");
-    }
-
-
-    final int uvRowStride = cameraImage!.planes[1].bytesPerRow;
-    final int? uvPixelStride = cameraImage!.planes[1].bytesPerPixel;
-    final int offset = uvRowStride * y + uvPixelStride! * x;
-
-    final Uint8List data = Uint8List.sublistView(cameraImage!.planes[1].bytes);
-    final Uint8List buffer = Uint8List(width * height);
-
-    for (int i = 0; i < height; i++) {
-      final start = offset+ i * uvRowStride;
-      final end = start + width * uvPixelStride;
-      buffer.setRange(i * width, (i + 1) * width, data.sublist(start, end));
-    }
-
-    return buffer;
-  }
-
-
-   */

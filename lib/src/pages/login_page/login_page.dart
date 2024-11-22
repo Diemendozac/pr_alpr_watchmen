@@ -1,142 +1,126 @@
 import 'package:flutter/material.dart';
-import 'package:pr_alpr_watchmen/src/providers/token_provider.dart';
-import 'package:pr_alpr_watchmen/src/utils/input_validator.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/svg.dart';
+import '../../blocs/auth_bloc/auth_bloc.dart';
+import '../../blocs/auth_bloc/auth_event.dart';
+import '../../blocs/auth_bloc/auth_state.dart';
 
-import '../../services/auth_state_service.dart';
-
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final bool isSmallScreen = MediaQuery.of(context).size.width < 600;
-
-    return Scaffold(
-        body: Center(
-            child: isSmallScreen
-                ? const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _Logo(),
-                      _FormContent(),
-                    ],
-                  )
-                : Container(
-                    padding: const EdgeInsets.all(32.0),
-                    constraints: const BoxConstraints(maxWidth: 800),
-                    child: const Row(
-                      children: [
-                        Expanded(child: _Logo()),
-                        Expanded(
-                          child: Center(child: _FormContent()),
-                        ),
-                      ],
-                    ),
-                  )));
-  }
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _Logo extends StatelessWidget {
-  const _Logo({Key? key}) : super(key: key);
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  String email = '';
+  String password = '';
 
   @override
   Widget build(BuildContext context) {
-    final bool isSmallScreen = MediaQuery.of(context).size.width < 600;
+    return Scaffold(
+      body: Center(
+        child: BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is Authenticated) {
+              Navigator.pushReplacementNamed(context, 'home');
+            } else if (state is Unauthenticated) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Session expired. Please log in again.')),
+              );
+            } else if (state is AuthError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state is AuthLoading) {
+              return const CircularProgressIndicator();
+            }
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SvgPicture.asset(
+                    'assets/cg_logo.svg',
+                    color: Colors.blue,
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FlutterLogo(size: isSmallScreen ? 100 : 200),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            "Welcome to Flutter!",
-            textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall!
-                .copyWith(color: Colors.black),
-          ),
-        )
-      ],
+                    height: 175,
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  _buildLoginForm(context),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
-}
 
-class _FormContent extends StatefulWidget {
-  const _FormContent({Key? key}) : super(key: key);
-
-  @override
-  State<_FormContent> createState() => __FormContentState();
-}
-
-class __FormContentState extends State<_FormContent> {
-  bool _isPasswordVisible = false;
-  String email = "";
-  String password = "";
-
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TokenProvider tokenProvider = TokenProvider();
-
-  @override
-  Widget build(BuildContext context) {
-    final authState = context.read<AuthState>();
-
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 300),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextFormField(
-              validator: (value) => InputValidator.validateEmail(value),
-              onSaved: (value) {
-                email = value!;
-              },
-              initialValue: 'jramireza@unicesar.edu.co',
-              decoration: _buildTextInputDecoration('Email'),
-            ),
-            _gap(),
-            TextFormField(
-              validator: (value) => InputValidator.validatePassword(value),
-              initialValue: 'asd1234',
-              onSaved: (value) {
-                password = value!;
-              },
-              obscureText: !_isPasswordVisible,
-              decoration: _buildTextInputDecoration('Password')
-                  .copyWith(suffixIcon: _buildPasswordSuffixIcon()),
-            ),
-            _gap(),
-            _gap(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4)),
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text(
-                    'Sign in',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                onPressed: () async {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    dynamic state = await tokenProvider.saveToken(
-                        'juancamilomendezsanchez@unicesar.edu.co', '4321dsa');
-                    if (state["statusCode"] == 200) authState.setLoggedIn(true);
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
+  Widget _buildLoginForm(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextFormField(
+            initialValue: 'juancamilomendezsanchez@unicesar.edu.co',
+            onSaved: (value) => email = value!,
+            validator: (value) =>
+                value!.isEmpty ? 'Please enter an email' : null,
+            decoration: _buildTextInputDecoration('Email'),
+          ),
+          const SizedBox(height: 20),
+          TextFormField(
+            initialValue: '4321dsa',
+            onSaved: (value) => password = value!,
+            validator: (value) =>
+                value!.isEmpty ? 'Please enter a password' : null,
+            obscureText: true,
+            decoration: _buildTextInputDecoration('Password'),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                _formKey.currentState!.save();
+                context.read<AuthBloc>().add(LoginRequested(email, password));
+              }
+            },
+            style: ButtonStyle(
+                foregroundColor: MaterialStateProperty.resolveWith((states) {
+                  return Colors.white;
+                }),
+                backgroundColor: MaterialStateProperty.resolveWith((states) {
+                  return Colors.blue;
+                }),
+                minimumSize:
+                    const MaterialStatePropertyAll(Size(double.maxFinite, 50)),
+                shape: MaterialStatePropertyAll(RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)))),
+            child: const Text('Login'),
+          ),
+          const Flex(
+            crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.end,
+              direction: Axis.vertical,
+              children: [
+            Text('Campus Gate',
+                style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600))
+          ]),
+        ],
       ),
     );
   }
@@ -145,25 +129,12 @@ class __FormContentState extends State<_FormContent> {
     return InputDecoration(
       filled: true,
       fillColor: const Color(0x50bdbdbd),
-      contentPadding: const EdgeInsets.all(20),
+      contentPadding: const EdgeInsets.all(15),
       label: Text(inputLabel),
       floatingLabelStyle: const TextStyle(color: Colors.transparent),
       labelStyle: Theme.of(context).textTheme.titleSmall,
       border: OutlineInputBorder(
-          borderSide: BorderSide.none, borderRadius: BorderRadius.circular(50)),
+          borderSide: BorderSide.none, borderRadius: BorderRadius.circular(20)),
     );
   }
-
-  IconButton _buildPasswordSuffixIcon() {
-    return IconButton(
-      icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
-      onPressed: () {
-        setState(() {
-          _isPasswordVisible = !_isPasswordVisible;
-        });
-      },
-    );
-  }
-
-  Widget _gap() => const SizedBox(height: 16);
 }

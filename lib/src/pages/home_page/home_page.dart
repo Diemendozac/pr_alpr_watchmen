@@ -9,10 +9,11 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.blue,
       appBar: AppBar(
         surfaceTintColor: Theme.of(context).colorScheme.background,
         foregroundColor: Theme.of(context).colorScheme.background,
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: Colors.blue,
 
       ),
       body: const Column(
@@ -23,7 +24,7 @@ class HomePage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF2633C5),
-        onPressed: () {Navigator.of(context).pushNamed('yolo');},
+        onPressed: () {Navigator.of(context).pushNamed('camera_test');},
         child: const Icon(Icons.camera_alt, color: Color(0xFFFAFAFA)),
       ),
 

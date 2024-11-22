@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class VehicleListItem extends StatelessWidget {
   final String plate;
@@ -8,7 +9,6 @@ class VehicleListItem extends StatelessWidget {
   final int model;
   final String line;
   final bool owner;
-  final VoidCallback? onMarkAsExited;
 
   const VehicleListItem({super.key,
     required this.plate,
@@ -16,7 +16,6 @@ class VehicleListItem extends StatelessWidget {
     required this.model,
     required this.line,
     required this.owner,
-    this.onMarkAsExited,
   });
 
   @override
@@ -77,14 +76,16 @@ class VehicleListItem extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SvgPicture.asset(
-            colorFilter: ColorFilter.mode(onSurfaceColor, BlendMode.srcIn),
-            alignment: Alignment.center,
-            owner
-                ? 'assets/images/user3.svg'
-                : 'assets/images/confidence-user3.svg',
-            width: 19,
-            height: 19,
+          Skeleton.ignore(
+            child: SvgPicture.asset(
+              colorFilter: ColorFilter.mode(onSurfaceColor, BlendMode.srcIn),
+              alignment: Alignment.center,
+              owner
+                  ? 'assets/images/user3.svg'
+                  : 'assets/images/confidence-user3.svg',
+              width: 19,
+              height: 19,
+            ),
           ),
           IconButton(onPressed: () {}, icon: const Icon(Icons.exit_to_app))
         ],

@@ -1,5 +1,7 @@
 // statistics_state.dart
 
+import 'package:pr_alpr_watchmen/src/models/camera_page_icon.dart';
+
 import '../../models/user_model.dart';
 
 abstract class UserVehicleState {}
@@ -11,8 +13,8 @@ class UserVehicleLoading extends UserVehicleState {}
 class UserVehiclePlateBeingRead extends UserVehicleState {}
 
 class UserVehicleSearchError extends UserVehicleState {
-  final String errorWhileSearching;
-  UserVehicleSearchError(this.errorWhileSearching);
+  final CameraPageIcon cameraPageIcon;
+  UserVehicleSearchError(this.cameraPageIcon);
 }
 
 class UserVehicleSearchLoading extends UserVehicleState {}
@@ -30,8 +32,8 @@ class UserVehicleSelected extends UserVehicleState {
 }
 
 class UserVehicleError extends UserVehicleState {
-  final String error;
-  UserVehicleError(this.error);
+  final CameraPageIcon cameraPageIcon;
+  UserVehicleError(this.cameraPageIcon);
 }
 
 class UserVehiclePauseCameraPreview extends UserVehicleState {}
@@ -40,4 +42,7 @@ class UserVehicleResumeCameraPreview extends UserVehicleState {}
 
 class GeneratingTicket extends UserVehicleState {}
 
-class SuccessfulProcess extends UserVehicleState {}
+class SuccessfulProcess extends UserVehicleState {
+  final CameraPageIcon cameraPageIcon;
+  SuccessfulProcess(this.cameraPageIcon);
+}

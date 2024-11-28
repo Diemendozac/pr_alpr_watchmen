@@ -9,7 +9,7 @@ class VehicleRepository {
   final AuthService authService = AuthService();
   final VehicleService vehicleService;
 
-  VehicleRepository(this.vehicleService);
+  VehicleRepository({required this.vehicleService});
 
   Future<List<dynamic>> fetchParkedVehicles() async {
     final token = await authService.getToken();

@@ -8,7 +8,7 @@ class UserRepository {
   final AuthService authService = AuthService();
   final UserService userService;
 
-  UserRepository(this.userService);
+  UserRepository({required this.userService});
 
   Future<List<dynamic>> fetchVehicleRelatedUsers(String plate) async {
     final token = await authService.getToken();

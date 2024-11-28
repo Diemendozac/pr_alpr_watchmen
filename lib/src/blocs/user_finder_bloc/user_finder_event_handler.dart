@@ -22,4 +22,8 @@ class CameraPageEventHandler {
   void handleTicketGeneration(String plate, String watchmanSelectedUser) {
     bloc.add(TicketGenerationRequested(plate, watchmanSelectedUser));
   }
+
+  void handleTextInputRequest(String plate) {
+    bloc.add(FetchVehicleRelatedUsersRequested(plate));
+  }
 }

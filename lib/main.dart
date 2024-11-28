@@ -22,7 +22,6 @@ import 'package:pr_alpr_watchmen/src/services/vehicle_service.dart';
 import 'package:pr_alpr_watchmen/src/theme/theme_constants.dart';
 import 'package:provider/provider.dart';
 
-
 late List<CameraDescription> cameras;
 
 void main() async {
@@ -65,10 +64,10 @@ class _MyAppState extends State<MyApp> {
           update: (_, authService, __) => AuthRepository(authService: authService),
         ),
         ProxyProvider<VehicleService, VehicleRepository>(
-          update: (_, vehicleService, __) => VehicleRepository(vehicleService),
+          update: (_, vehicleService, __) => VehicleRepository(vehicleService: vehicleService),
         ),
         ProxyProvider<UserService, UserRepository>(
-          update: (_, userService, __) => UserRepository(userService),
+          update: (_, userService, __) => UserRepository(userService: userService),
         )
       ],
       child: Builder(

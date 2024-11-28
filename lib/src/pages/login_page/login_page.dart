@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:pr_alpr_watchmen/src/utils/text_input_helper.dart';
 import '../../blocs/auth_bloc/auth_bloc.dart';
 import '../../blocs/auth_bloc/auth_event.dart';
 import '../../blocs/auth_bloc/auth_state.dart';
@@ -77,7 +78,7 @@ class _LoginPageState extends State<LoginPage> {
             onSaved: (value) => email = value!,
             validator: (value) =>
                 value!.isEmpty ? 'Please enter an email' : null,
-            decoration: _buildTextInputDecoration('Email'),
+            decoration: TextInputHelper.buildTextInputDecoration(context, 'Email'),
           ),
           const SizedBox(height: 20),
           TextFormField(
@@ -86,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
             validator: (value) =>
                 value!.isEmpty ? 'Please enter a password' : null,
             obscureText: true,
-            decoration: _buildTextInputDecoration('Password'),
+            decoration: TextInputHelper.buildTextInputDecoration(context, 'Password'),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
@@ -125,16 +126,5 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  InputDecoration _buildTextInputDecoration(String inputLabel) {
-    return InputDecoration(
-      filled: true,
-      fillColor: const Color(0x50bdbdbd),
-      contentPadding: const EdgeInsets.all(15),
-      label: Text(inputLabel),
-      floatingLabelStyle: const TextStyle(color: Colors.transparent),
-      labelStyle: Theme.of(context).textTheme.titleSmall,
-      border: OutlineInputBorder(
-          borderSide: BorderSide.none, borderRadius: BorderRadius.circular(20)),
-    );
-  }
+
 }

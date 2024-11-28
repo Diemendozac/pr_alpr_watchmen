@@ -86,4 +86,5 @@ TextStyle _titleFontBuilder(double size, Color fontColor) {
       fontSize: size,
       color: fontColor
   );
+
 }

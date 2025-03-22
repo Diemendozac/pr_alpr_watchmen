@@ -10,7 +10,7 @@ class UserRepository {
 
   UserRepository({required this.userService});
 
-  Future<List<dynamic>> fetchVehicleRelatedUsers(String plate) async {
+  Future<dynamic> fetchVehicleRelatedUsers(String plate) async {
     final token = await authService.getToken();
     if (token == null) throw Exception("Token not found");
 

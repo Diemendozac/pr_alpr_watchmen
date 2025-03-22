@@ -26,7 +26,7 @@ class UserService {
     return response;
   }
 
-  Future<List<dynamic>> fetchUserRelatedVehicles(String token, String plate) async {
+  Future<dynamic> fetchUserRelatedVehicles(String token, String plate) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/watchman/related-users?plate=$plate'),

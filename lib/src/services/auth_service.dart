@@ -4,8 +4,10 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/config.dart';
+
 class AuthService {
-  final String baseUrl = "http://ec2-18-231-167-197.sa-east-1.compute.amazonaws.com:8080"; // Cambia esto a la URL de tu backend
+  final String baseUrl = Config.serverBaseUrl;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
@@ -13,7 +15,7 @@ class AuthService {
         Uri.parse('$baseUrl/authenticate'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': email, 'password': password}),
-      ).timeout(const Duration(seconds: 10)); // Añade un timeout de 10 segundos
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -21,9 +23,9 @@ class AuthService {
         throw Exception("Login error: ${response.body}");
       }
     } on SocketException {
-      throw Exception("No internet connection.");
+      throw Exception("No tienes conexión a internet.");
     } on TimeoutException {
-      throw Exception("Connection timed out. Please try again.");
+      throw Exception("El servidor no ha podido responder.");
     } catch (e) {
       throw Exception("An error occurred: $e");
     }

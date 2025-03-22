@@ -6,11 +6,24 @@ import 'package:pr_alpr_watchmen/src/blocs/parked_vehicles_bloc/parked_vehicles_
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../blocs/parked_vehicles_bloc/parked_vehicles_event.dart';
 import '../../models/vehicle_model.dart';
-import '../../repositories/vehicle_repository.dart';
 import 'components/vehicle_list_view.dart';
 
-class VehicleManagementPage extends StatelessWidget {
+class VehicleManagementPage extends StatefulWidget {
   const VehicleManagementPage({Key? key}) : super(key: key);
+
+  @override
+  State<VehicleManagementPage> createState() => _VehicleManagementPageState();
+}
+
+class _VehicleManagementPageState extends State<VehicleManagementPage> {
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  List<Vehicle>? vehicles;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<ParkedVehiclesBloc>().add(FetchParkedVehiclesRequested());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,27 +33,70 @@ class VehicleManagementPage extends StatelessWidget {
       body: Column(
         children: [
           _createHeader(context),
-          BlocProvider(
-            create: (context) => ParkedVehiclesBloc(
-              parkedVehiclesRepository: context.read<VehicleRepository>(),
-            )..add(FetchParkedVehiclesRequested()),
-            child: BlocBuilder<ParkedVehiclesBloc, ParkedVehiclesState>(
-              builder: (context, state) {
-                if (state is ParkedVehiclesLoading) {
-                  return _buildSkeletonLoader(context);
-                } else if (state is ParkedVehiclesLoaded) {
-                  return Expanded(child: _createVehicleList(context, state.parkedVehicles));
-                } else if (state is ParkedVehiclesError) {
-                  return _buildErrorWidget(context, state.error, textTheme);
-                } else {
-                  return Container();
-                }
-              },
-            ),
+          BlocConsumer<ParkedVehiclesBloc, ParkedVehiclesState>(
+            listener: (context, state) {
+              if (state is ParkedVehiclesLoaded) {
+                setState(() {
+                  vehicles = state.parkedVehicles;
+                });
+              } else if (state is ParkedVehicleKicked) {
+                _removeVehicle(state.plate);
+              } else if (state is ParkedVehicleKickRequestFailed){
+                _showSnackbar(state.message);
+              }
+            },
+            builder: (context, state) {
+              if (state is ParkedVehiclesLoading) {
+                return _buildSkeletonLoader(context);
+              } else if (state is ParkedVehiclesError) {
+                return _buildErrorWidget(context, state.error, textTheme);
+              } else {
+                return Container();
+              }
+            },
           ),
+          if (vehicles != null)
+            Expanded(child: _createAnimatedVehicleList(context, vehicles!)),
         ],
       ),
     );
+  }
+
+  Widget _createAnimatedVehicleList(BuildContext context, List<Vehicle> vehicles) {
+    return AnimatedList(
+      key: _listKey,
+      padding: const EdgeInsets.only(top: 20, bottom: 20, left: 10),
+      initialItemCount: vehicles.length,
+      itemBuilder: (context, index, animation) {
+        final vehicle = vehicles[index];
+        return _buildVehicleListItem(context, vehicle, animation);
+      },
+    );
+  }
+
+  Widget _buildVehicleListItem(BuildContext context, Vehicle vehicle, Animation<double> animation) {
+    return SizeTransition(
+      sizeFactor: animation,
+      child: VehicleListItem(
+        plate: vehicle.plate,
+        brand: vehicle.brand,
+        model: vehicle.model,
+        line: vehicle.line,
+        owner: vehicle.isOwner,
+      ),
+    );
+  }
+
+  void _removeVehicle(String plate) {
+    final index = vehicles?.indexWhere((v) => v.plate == plate);
+    if (index != null && index != -1) {
+      final removedVehicle = vehicles!.removeAt(index);
+      _listKey.currentState?.removeItem(
+        index,
+            (context, animation) => _buildVehicleListItem(context, removedVehicle, animation),
+        duration: const Duration(milliseconds: 150),
+      );
+    }
   }
 
   Widget _createHeader(BuildContext context) {
@@ -73,7 +129,6 @@ class VehicleManagementPage extends StatelessWidget {
   Widget _buildSkeletonLoader(BuildContext context) {
     return Expanded(
       child: Skeletonizer(
-
         ignorePointers: true,
         enabled: true,
         child: _createVehicleList(
@@ -137,4 +192,13 @@ class VehicleManagementPage extends StatelessWidget {
       ),
     );
   }
+
+  void _showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
 }
+

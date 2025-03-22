@@ -35,16 +35,27 @@ class _CameraPageState extends State<CameraPage> {
             } else if (state is UserVehicleResumeCameraPreview) {
               await cameraService.resumePreview();
             }
-            if (state is UserVehicleError)
+            if (state is UserVehicleError) {
               _cameraPageIcon = state.cameraPageIcon;
-            if (state is UserVehicleSearchError)
+            }
+            if (state is UserVehicleSearchError) {
               _cameraPageIcon = state.cameraPageIcon;
-            if (state is SuccessfulProcess)
+            }
+            if (state is SuccessfulProcess) {
               _cameraPageIcon = state.cameraPageIcon;
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text(
+                          'Tiempo L'
+                              'ectura: ${state.t1}ms\r\nTiempo Ticket: ${state.t2}us')),
+                );
+              }
+            }
           },
           builder: (context, state) {
             final cameraEventHandler =
-            CameraPageEventHandler(bloc: context.read<UserVehicleBloc>());
+                CameraPageEventHandler(bloc: context.read<UserVehicleBloc>());
             return Stack(children: [
               CameraWidget(cameraEventHandler: cameraEventHandler),
               _cameraPageIcon != null
@@ -52,10 +63,11 @@ class _CameraPageState extends State<CameraPage> {
                   : Container(),
               state is UserVehicleLoaded
                   ? UserProfileListWidget(
-                state.vehicleRelatedUsers,
-                state.plate,
-                cameraPageEventHandler: cameraEventHandler,
-              )
+                      state.relatedUsersResponse.vehicleRelatedUsers,
+                      state.plate,
+                      state.relatedUsersResponse.isParked,
+                      cameraPageEventHandler: cameraEventHandler,
+                    )
                   : Container(),
             ]);
           },
@@ -70,13 +82,20 @@ class _CameraPageState extends State<CameraPage> {
       child: InkWell(
         borderRadius: BorderRadius.circular(100),
         onTap: () {
-          setState(() {
-            showDialog(context: context, builder: (BuildContext context) {
-              return ErrorPopup(message: _cameraPageIcon?.message ??
-                  'Error al momento de procesar');
-            },);
-            _cameraPageIcon = null;
-          });
+          if (_cameraPageIcon?.message != '') {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return ErrorPopup(
+                  message: _cameraPageIcon?.message ??
+                      'Error al momento de procesar',
+                  deleteIcon: deleteIcon,
+                );
+              },
+            );
+          } else {
+            deleteIcon();
+          }
         },
         child: Lottie.asset(_cameraPageIcon?.animationPath ?? '',
             height: 50,
@@ -91,4 +110,9 @@ class _CameraPageState extends State<CameraPage> {
     );
   }
 
+  void deleteIcon() {
+    setState(() {
+      _cameraPageIcon = null;
+    });
+  }
 }

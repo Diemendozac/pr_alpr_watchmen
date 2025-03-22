@@ -34,6 +34,26 @@ class VehicleService {
     }
   }
 
+  Future<dynamic> kickVehicle(String token, String plate) async {
+    try {
+      var response = await http.get(
+        Uri.parse('$baseUrl/watchman/kick?plate=$plate'),
+        headers: {'Content-Type': 'application/json', 'Authorization' : 'Bearer $token' },
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        throw Exception("Parked vehicles error: ${response.body}");
+      }
+    } on SocketException {
+      throw Exception("No internet connection.");
+    } on TimeoutException {
+      throw Exception("Connection timed out. Please try again.");
+    } catch (e) {
+      throw Exception("An error occurred: $e");
+    }
+  }
+
   Future<dynamic> findAllParkedVehicles() async {
     String? token = await _storage.read(key: 'token');
     //if(token == null) return null;

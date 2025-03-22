@@ -1,3 +1,4 @@
+
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -8,7 +9,8 @@ import '../models/user_model.dart';
 class UserProfileListWidget extends StatefulWidget {
   const UserProfileListWidget(
     this.users,
-    this.plate, {
+    this.plate,
+    this.isParked, {
     super.key,
     required this.cameraPageEventHandler,
   });
@@ -16,6 +18,7 @@ class UserProfileListWidget extends StatefulWidget {
   final CameraPageEventHandler cameraPageEventHandler;
   final List<User> users;
   final String plate;
+  final bool isParked;
 
   @override
   State<UserProfileListWidget> createState() => _UserProfileListWidgetState();
@@ -135,8 +138,8 @@ class _UserProfileListWidgetState extends State<UserProfileListWidget> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('Ingresar',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            child: Text('Dar ${widget.isParked ? 'salida' : 'ingreso'}' ,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
           ),
         ],
       ),

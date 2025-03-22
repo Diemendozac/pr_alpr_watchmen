@@ -18,4 +18,12 @@ class VehicleRepository {
     final response = await vehicleService.fetchParkedVehicles(token);
     return response;
   }
+
+  Future<dynamic> kickVehicle(String plate) async {
+    final token = await authService.getToken();
+    if (token == null) throw Exception("Token not found");
+
+    final response = await vehicleService.kickVehicle(token, plate);
+    return response;
+  }
 }

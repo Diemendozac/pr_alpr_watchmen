@@ -6,8 +6,9 @@ import '../../../widgets/popup_template.dart';
 
 class ErrorPopup extends StatelessWidget {
   final String message;
+  final Function deleteIcon;
 
-  const ErrorPopup({Key? key, required this.message}) : super(key: key);
+  const ErrorPopup({Key? key, required this.message, required this.deleteIcon}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +43,7 @@ class ErrorPopup extends StatelessWidget {
           const SizedBox(height: 24.0),
           ElevatedButton(
             onPressed: () {
+              deleteIcon();
               Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(

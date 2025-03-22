@@ -10,14 +10,17 @@ class TicketService {
   final String baseUrl = Config.serverBaseUrl;
   final AuthService authService = AuthService();
 
-  Future<List<dynamic>> issueTicket(String plate, String watchmanSelectedUser) async {
+  Future<void> issueTicket(String plate, String watchmanSelectedUser) async {
     try {
+      final token = await authService.getToken();
       final response = await http.patch(
-        Uri.parse('$baseUrl/watchman/switch-state?plate=$plate&watchmanSelectedUser=$watchmanSelectedUser'),
-        headers: {'Content-Type': 'application/json', 'Authorization' : 'Bearer ${authService.getToken()}' },
+        Uri.parse('$baseUrl/watchman/switch-state'),
+        headers: {'Content-Type': 'application/json', 'Authorization' : 'Bearer $token',
+        },
+        body: json.encode({'plate': plate.toUpperCase(), 'watchmanSelectedUser': watchmanSelectedUser})
       ).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        return;
       } else {
         throw Exception("Error al generar el ticket: ${response.body}");
       }

@@ -11,10 +11,11 @@ class ParkedVehiclesBloc extends Bloc<ParkedVehicleEvent, ParkedVehiclesState> {
   final VehicleRepository parkedVehiclesRepository;
 
   ParkedVehiclesBloc({required this.parkedVehiclesRepository}) : super(ParkedVehiclesInitial()) {
-    on<FetchParkedVehiclesRequested>(_onFetchStatisticsRequested);
+    on<FetchParkedVehiclesRequested>(_onFetchParkedVehiclesRequested);
+    on<ParkedVehicleKickRequested>(_onParkedVehicleKickRequest);
   }
 
-  Future<void> _onFetchStatisticsRequested(
+  Future<void> _onFetchParkedVehiclesRequested(
       FetchParkedVehiclesRequested event, Emitter<ParkedVehiclesState> emit) async {
     emit(ParkedVehiclesLoading());
     try {
@@ -25,6 +26,18 @@ class ParkedVehiclesBloc extends Bloc<ParkedVehicleEvent, ParkedVehiclesState> {
       emit(ParkedVehiclesLoaded(vehicles));
     } catch (error) {
       emit(ParkedVehiclesError("Failed to load parked vehicles: $error"));
+    }
+  }
+
+  Future<void> _onParkedVehicleKickRequest(
+      ParkedVehicleKickRequested event, Emitter<ParkedVehiclesState> emit) async {
+    try {
+      await parkedVehiclesRepository.kickVehicle(event.plate);
+      emit(ParkedVehicleKicked(event.plate));
+      emit(ParkedVehiclesInitial());
+    } catch (error) {
+      emit(ParkedVehicleKickRequestFailed("Failed to load parked vehicles: $error"));
+      emit(ParkedVehiclesInitial());
     }
   }
 

@@ -1,5 +1,6 @@
 // statistics_state.dart
 
+import 'package:pr_alpr_watchmen/src/http/related_users_response.dart';
 import 'package:pr_alpr_watchmen/src/models/camera_page_icon.dart';
 
 import '../../models/user_model.dart';
@@ -21,9 +22,9 @@ class UserVehicleSearchLoading extends UserVehicleState {}
 
 
 class UserVehicleLoaded extends UserVehicleState {
-  final List<User> vehicleRelatedUsers;
+  final RelatedUsersResponse relatedUsersResponse;
   final String plate;
-  UserVehicleLoaded(this.vehicleRelatedUsers, this.plate);
+  UserVehicleLoaded(this.relatedUsersResponse, this.plate);
 }
 
 class UserVehicleSelected extends UserVehicleState {
@@ -44,5 +45,7 @@ class GeneratingTicket extends UserVehicleState {}
 
 class SuccessfulProcess extends UserVehicleState {
   final CameraPageIcon cameraPageIcon;
-  SuccessfulProcess(this.cameraPageIcon);
+  final int t1;
+  final int t2;
+  SuccessfulProcess(this.cameraPageIcon, this.t1, this.t2);
 }

@@ -51,7 +51,6 @@ class _LoginPageState extends State<LoginPage> {
                   SvgPicture.asset(
                     'assets/cg_logo.svg',
                     color: Colors.blue,
-
                     height: 175,
                   ),
                   const SizedBox(
@@ -76,13 +75,12 @@ class _LoginPageState extends State<LoginPage> {
           TextFormField(
             initialValue: 'juancamilomendezsanchez@unicesar.edu.co',
             onSaved: (value) => email = value!,
-            validator: (value) =>
-                value!.isEmpty ? 'Please enter an email' : null,
+            validator: (value) => TextInputHelper.validateEmail(value),
             decoration: TextInputHelper.buildTextInputDecoration(context, 'Email'),
           ),
           const SizedBox(height: 20),
           TextFormField(
-            initialValue: '4321dsa',
+            initialValue: 'testpassword',
             onSaved: (value) => password = value!,
             validator: (value) =>
                 value!.isEmpty ? 'Please enter a password' : null,

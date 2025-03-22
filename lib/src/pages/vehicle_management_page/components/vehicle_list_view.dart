@@ -2,6 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../blocs/parked_vehicles_bloc/parked_vehicles_bloc.dart';
+import '../../../blocs/parked_vehicles_bloc/parked_vehicles_event.dart';
 
 class VehicleListItem extends StatelessWidget {
   final String plate;
@@ -20,6 +24,8 @@ class VehicleListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    ParkedVehiclesBloc parkedVehiclesBloc = context.read<ParkedVehiclesBloc>();
 
     Color onSurfaceColor = Theme
         .of(context)
@@ -87,7 +93,7 @@ class VehicleListItem extends StatelessWidget {
               height: 19,
             ),
           ),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.exit_to_app))
+          IconButton(onPressed: () {parkedVehiclesBloc.add(ParkedVehicleKickRequested(plate));}, icon: const Icon(Icons.exit_to_app))
         ],
       ),
     );

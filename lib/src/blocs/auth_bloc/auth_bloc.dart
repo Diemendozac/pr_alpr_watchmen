@@ -53,7 +53,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   void _startTokenValidityCheck() {
-    _tokenCheckTimer = Timer.periodic(const Duration(minutes: 15), (timer) {
+    _tokenCheckTimer = Timer.periodic(const Duration(hours: 6), (timer) {
       add(CheckTokenValidity());
     });
   }

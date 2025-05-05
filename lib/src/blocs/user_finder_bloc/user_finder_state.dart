@@ -45,7 +45,5 @@ class GeneratingTicket extends UserVehicleState {}
 
 class SuccessfulProcess extends UserVehicleState {
   final CameraPageIcon cameraPageIcon;
-  final int t1;
-  final int t2;
-  SuccessfulProcess(this.cameraPageIcon, this.t1, this.t2);
+  SuccessfulProcess(this.cameraPageIcon);
 }

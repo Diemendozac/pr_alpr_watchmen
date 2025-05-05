@@ -1,12 +1,15 @@
 buildscript {
-    ext.kotlin_version = '1.7.10'
+    ext {
+        kotlin_version = '1.9.20' // Única fuente de verdad para Kotlin
+        agp_version = '8.2.1'     // Versión de Android Gradle Plugin
+    }
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.1'
+        classpath "com.android.tools.build:gradle:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -29,4 +32,3 @@ subprojects {
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
-

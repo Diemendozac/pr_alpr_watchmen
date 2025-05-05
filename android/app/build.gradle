@@ -1,7 +1,8 @@
+
 plugins {
     id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
+    id "dev.flutter.flutter-gradle-plugin"  // Nueva forma declarativa
+    id "org.jetbrains.kotlin.android"
 }
 
 def localProperties = new Properties()
@@ -10,6 +11,12 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.withReader('UTF-8') { reader ->
         localProperties.load(reader)
     }
+}
+
+// Añade estas 4 líneas nuevas
+def flutterRoot = localProperties.getProperty('flutter.sdk')
+if (flutterRoot == null) {
+    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
 }
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
@@ -22,23 +29,19 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-android {
-    namespace "com.example.pr_alpr_watchmen"
-    compileSdkVersion flutter.compileSdkVersion
-    ndkVersion flutter.ndkVersion
+// El resto del archivo manténlo igual...
 
-    aaptOptions {
-        noCompress 'tflite'
-        noCompress 'lite'
-    }
+android {
+    namespace "com.example.pr_alpr_watchmen"  // Reemplaza con tu package name
+    compileSdkVersion 35  // Android 14 (Última compatible)
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17  // JDK 21 usa VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
 
     sourceSets {
@@ -46,23 +49,20 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.example.pr_alpr_watchmen"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion 26
-        targetSdkVersion flutter.targetSdkVersion
+        applicationId "com.example.pr_alpr_watchmen"  // Tu package name
+        minSdkVersion 21
+        targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        multiDexEnabled true
     }
+
 
     buildTypes {
         release {
-            shrinkResources false
-            minifyEnabled false
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.debug
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -71,4 +71,7 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation 'androidx.multidex:multidex:2.0.1'
+}

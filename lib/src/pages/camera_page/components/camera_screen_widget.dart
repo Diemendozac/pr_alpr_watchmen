@@ -1,32 +1,34 @@
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pr_alpr_watchmen/main.dart';
-import 'package:pr_alpr_watchmen/src/utils/plate_reader.dart';
-
+import 'package:pr_alpr_watchmen/src/services/ocr_providers/ocr_provider.dart';
 import '../../../blocs/user_finder_bloc/user_finder_event_handler.dart';
 import '../../../services/camera_controller_service.dart';
 import '../../../utils/text_input_helper.dart';
 import '../../../widgets/popup_template.dart';
 import 'permission_denied.dart';
 
+
 class CameraWidget extends StatefulWidget {
   final CameraPageEventHandler cameraEventHandler;
+  final OCRProvider ocrProvider; // Proveedor de OCR como dependencia
 
-  const CameraWidget({super.key, required this.cameraEventHandler});
+  const CameraWidget({
+    super.key,
+    required this.cameraEventHandler,
+    required this.ocrProvider,
+  });
 
   @override
   CameraWidgetState createState() => CameraWidgetState();
 }
 
-class CameraWidgetState extends State<CameraWidget>
-    with WidgetsBindingObserver {
+class CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver {
   CameraController? controller =
       GetIt.instance<CameraControllerService>().cameraController;
 
@@ -37,7 +39,6 @@ class CameraWidgetState extends State<CameraWidget>
   final bool _isVideoCameraSelected = false;
   double _minAvailableZoom = 1.0;
   double _maxAvailableZoom = 1.0;
-  final PlateReader _plateReader = PlateReader();
 
   // Current values
   double _currentZoomLevel = 1.0;
@@ -74,8 +75,7 @@ class CameraWidgetState extends State<CameraWidget>
 
     try {
       XFile file = await cameraController.takePicture();
-      final inputImage = InputImage.fromFilePath(file.path);
-      String recognizedText = await _plateReader.getCameraImageData(inputImage);
+      String recognizedText = await widget.ocrProvider.recognizeText(file.path);
       widget.cameraEventHandler.handleCameraImageRecognition(recognizedText);
     } on CameraException {
       widget.cameraEventHandler.handleCameraErrorWhileTakingPhoto();
@@ -183,225 +183,225 @@ class CameraWidgetState extends State<CameraWidget>
         backgroundColor: Colors.black,
         body: _isCameraPermissionGranted
             ? _isCameraInitialized
-                ? Column(
-                    children: [
-                      AspectRatio(
-                        aspectRatio: 1 / controller!.value.aspectRatio,
-                        child: Stack(
+            ? Column(
+          children: [
+            AspectRatio(
+              aspectRatio: 1 / controller!.value.aspectRatio,
+              child: Stack(
+                children: [
+                  CameraPreview(
+                    controller!,
+                    child: LayoutBuilder(builder:
+                        (BuildContext context,
+                        BoxConstraints constraints) {
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTapDown: (details) =>
+                            onViewFinderTap(details, constraints),
+                      );
+                    }),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      16.0,
+                      8.0,
+                      16.0,
+                      8.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(child: Container()),
+                        Row(
                           children: [
-                            CameraPreview(
-                              controller!,
-                              child: LayoutBuilder(builder:
-                                  (BuildContext context,
-                                      BoxConstraints constraints) {
-                                return GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTapDown: (details) =>
-                                      onViewFinderTap(details, constraints),
-                                );
-                              }),
+                            Expanded(
+                              child: Slider(
+                                value: _currentZoomLevel,
+                                min: _minAvailableZoom,
+                                max: _maxAvailableZoom,
+                                activeColor: Colors.white,
+                                inactiveColor: Colors.white30,
+                                onChanged: (value) async {
+                                  setState(() {
+                                    _currentZoomLevel = value;
+                                  });
+                                  await controller!
+                                      .setZoomLevel(value);
+                                },
+                              ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                16.0,
-                                8.0,
-                                16.0,
-                                8.0,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Expanded(child: Container()),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Slider(
-                                          value: _currentZoomLevel,
-                                          min: _minAvailableZoom,
-                                          max: _maxAvailableZoom,
-                                          activeColor: Colors.white,
-                                          inactiveColor: Colors.white30,
-                                          onChanged: (value) async {
-                                            setState(() {
-                                              _currentZoomLevel = value;
-                                            });
-                                            await controller!
-                                                .setZoomLevel(value);
-                                          },
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 8.0),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.black87,
-                                            borderRadius:
-                                                BorderRadius.circular(10.0),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text(
-                                              '${_currentZoomLevel.toStringAsFixed(1)}x',
-                                              style: const TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                              padding:
+                              const EdgeInsets.only(right: 8.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black87,
+                                  borderRadius:
+                                  BorderRadius.circular(10.0),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    '${_currentZoomLevel.toStringAsFixed(1)}x',
+                                    style: const TextStyle(
+                                        color: Colors.white),
                                   ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            _isCameraInitialized = false;
-                                          });
-                                          onNewCameraSelected(cameras[
-                                              _isRearCameraSelected ? 1 : 0]);
-                                          setState(() {
-                                            _isRearCameraSelected =
-                                                !_isRearCameraSelected;
-                                          });
-                                        },
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            const Icon(
-                                              Icons.circle,
-                                              color: Colors.black38,
-                                              size: 60,
-                                            ),
-                                            Icon(
-                                              _isRearCameraSelected
-                                                  ? Icons.camera_front
-                                                  : Icons.camera_rear,
-                                              color: Colors.white,
-                                              size: 30,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      InkWell(
-                                        onTap: () async {
-                                          await takePicture();
-                                        },
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.circle,
-                                              color: _isVideoCameraSelected
-                                                  ? Colors.white
-                                                  : Colors.white38,
-                                              size: 80,
-                                            ),
-                                            const Icon(
-                                              Icons.circle,
-                                              color: Colors.white,
-                                              size: 65,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      InkWell(
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return _popupEntryWidget();
-                                            },
-                                          );
-                                        },
-                                        child: const Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.circle,
-                                              color: Colors.black38,
-                                              size: 60,
-                                            ),
-                                            Icon(
-                                              Icons.edit,
-                                              color: Colors.white,
-                                              size: 30,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _isCameraInitialized = false;
+                                });
+                                onNewCameraSelected(cameras[
+                                _isRearCameraSelected ? 1 : 0]);
+                                setState(() {
+                                  _isRearCameraSelected =
+                                  !_isRearCameraSelected;
+                                });
+                              },
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.circle,
+                                    color: Colors.black38,
+                                    size: 60,
+                                  ),
+                                  Icon(
+                                    _isRearCameraSelected
+                                        ? Icons.camera_front
+                                        : Icons.camera_rear,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () async {
+                                await takePicture();
+                              },
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.circle,
+                                    color: _isVideoCameraSelected
+                                        ? Colors.white
+                                        : Colors.white38,
+                                    size: 80,
+                                  ),
+                                  const Icon(
+                                    Icons.circle,
+                                    color: Colors.white,
+                                    size: 65,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return _popupEntryWidget();
+                                  },
+                                );
+                              },
+                              child: const Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.circle,
+                                    color: Colors.black38,
+                                    size: 60,
+                                  ),
+                                  Icon(
+                                    Icons.edit,
+                                    color: Colors.white,
+                                    size: 30,
                                   ),
                                 ],
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                    16.0, 8.0, 16.0, 8.0),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    IconButton(
-                                      onPressed: () =>
-                                          _setCurrentFlashMode(FlashMode.off),
-                                      icon: Icon(Icons.flash_off,
-                                          color: _selectActiveFlash(
-                                              _currentFlashMode,
-                                              FlashMode.off)),
-                                    ),
-                                    IconButton(
-                                      onPressed: () =>
-                                          _setCurrentFlashMode(FlashMode.auto),
-                                      icon: Icon(Icons.flash_auto,
-                                          color: _selectActiveFlash(
-                                              _currentFlashMode,
-                                              FlashMode.auto)),
-                                    ),
-                                    IconButton(
-                                      onPressed: () => _setCurrentFlashMode(
-                                          FlashMode.always),
-                                      icon: Icon(Icons.flash_on,
-                                          color: _selectActiveFlash(
-                                              _currentFlashMode,
-                                              FlashMode.always)),
-                                    ),
-                                    IconButton(
-                                      onPressed: () =>
-                                          _setCurrentFlashMode(FlashMode.torch),
-                                      icon: Icon(Icons.highlight,
-                                          color: _selectActiveFlash(
-                                              _currentFlashMode,
-                                              FlashMode.torch)),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : const Center(
-                    child: Text(
-                      'LOADING',
-                      style: TextStyle(color: Colors.white),
+                      ],
                     ),
-                  )
-            : PermissionDeniedWidget(
-                onPermissionDenied: getPermissionStatus,
+                  ),
+                ],
               ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          16.0, 8.0, 16.0, 8.0),
+                      child: Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            onPressed: () =>
+                                _setCurrentFlashMode(FlashMode.off),
+                            icon: Icon(Icons.flash_off,
+                                color: _selectActiveFlash(
+                                    _currentFlashMode,
+                                    FlashMode.off)),
+                          ),
+                          IconButton(
+                            onPressed: () =>
+                                _setCurrentFlashMode(FlashMode.auto),
+                            icon: Icon(Icons.flash_auto,
+                                color: _selectActiveFlash(
+                                    _currentFlashMode,
+                                    FlashMode.auto)),
+                          ),
+                          IconButton(
+                            onPressed: () => _setCurrentFlashMode(
+                                FlashMode.always),
+                            icon: Icon(Icons.flash_on,
+                                color: _selectActiveFlash(
+                                    _currentFlashMode,
+                                    FlashMode.always)),
+                          ),
+                          IconButton(
+                            onPressed: () =>
+                                _setCurrentFlashMode(FlashMode.torch),
+                            icon: Icon(Icons.highlight,
+                                color: _selectActiveFlash(
+                                    _currentFlashMode,
+                                    FlashMode.torch)),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ],
+        )
+            : const Center(
+          child: Text(
+            'LOADING',
+            style: TextStyle(color: Colors.white),
+          ),
+        )
+            : PermissionDeniedWidget(
+          onPermissionDenied: getPermissionStatus,
+        ),
       ),
     );
   }
@@ -468,5 +468,4 @@ class CameraWidgetState extends State<CameraWidget>
       ),
     );
   }
-
 }

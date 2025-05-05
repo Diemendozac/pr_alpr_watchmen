@@ -17,10 +17,6 @@ class UserVehicleBloc extends Bloc<UserVehicleEvent, UserVehicleState> {
   final UserRepository userRepository;
   final TicketService ticketService = GetIt.instance<TicketService>();
   final PlateReader _plateReader = PlateReader();
-  int? _fetchAllUsersRequestTime = 0;
-  int? _createTicketRequestTime = 0;
-  Stopwatch _t1Stopwatch = Stopwatch();
-  Stopwatch _t2Stopwatch = Stopwatch();
 
   UserVehicleBloc({required this.userRepository})
       : super(UserVehicleInitial()) {
@@ -33,14 +29,12 @@ class UserVehicleBloc extends Bloc<UserVehicleEvent, UserVehicleState> {
 
   void _onCameraImageTaken(
       ReadVehiclePlateRequested event, Emitter<UserVehicleState> emit) {
-    _t1Stopwatch = Stopwatch()..start();
     emit(UserVehiclePlateBeingRead());
     String plate = _plateReader.getPlateDataInText(event.cameraImageLetters);
     if (plate.isNotEmpty) {
       add(FetchVehicleRelatedUsersRequested(plate));
       return;
     }
-    _t1Stopwatch.stop();
     emit(UserVehicleSearchError(CameraPageIconBuilder.buildCameraErrorOnPhoto(
         'No hemos encontrado ninguna placa. Intenta manualmente')));
   }
@@ -54,12 +48,7 @@ class UserVehicleBloc extends Bloc<UserVehicleEvent, UserVehicleState> {
       final RelatedUsersResponse relatedUsersResponse = RelatedUsersResponse.fromJson(parkedVehiclesData);
       emit(UserVehiclePauseCameraPreview());
       emit(UserVehicleLoaded(relatedUsersResponse, event.plate));
-      _t1Stopwatch.stop();
-      _fetchAllUsersRequestTime = _t1Stopwatch.elapsedMilliseconds;
-      _t1Stopwatch.reset();
     } catch (error) {
-      _t1Stopwatch.stop();
-      _t1Stopwatch.reset();
       emit(UserVehicleResumeCameraPreview());
       emit(UserVehicleError(CameraPageIconBuilder.buildCameraErrorOnRequest(
           'Failed to load users: $error')));
@@ -68,18 +57,13 @@ class UserVehicleBloc extends Bloc<UserVehicleEvent, UserVehicleState> {
 
   void _onTicketGenerationRequested(
       TicketGenerationRequested event, Emitter<UserVehicleState> emit) async {
-    _t2Stopwatch = Stopwatch()..start();
     emit(GeneratingTicket());
     try {
       ticketService.issueTicket(event.plate, event.watchmanSelectedUser);
       emit(UserVehicleResumeCameraPreview());
-      _createTicketRequestTime = _t2Stopwatch.elapsedMicroseconds;
-      _t2Stopwatch.reset();
-      emit(SuccessfulProcess(CameraPageIconBuilder.buildSuccessIcon(), _fetchAllUsersRequestTime!, _createTicketRequestTime!));
+      emit(SuccessfulProcess(CameraPageIconBuilder.buildSuccessIcon()));
 
     } catch (error) {
-      _t2Stopwatch.stop();
-      _t2Stopwatch.reset();
       emit(UserVehicleResumeCameraPreview());
       emit(UserVehicleError(CameraPageIconBuilder.buildCameraErrorOnRequest(
           'Failed to load users: $error')));

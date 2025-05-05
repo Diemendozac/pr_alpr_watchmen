@@ -4,6 +4,8 @@ import 'package:get_it/get_it.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pr_alpr_watchmen/src/blocs/user_finder_bloc/user_finder_bloc.dart';
 import 'package:pr_alpr_watchmen/src/blocs/user_finder_bloc/user_finder_state.dart';
+import 'package:pr_alpr_watchmen/src/services/ocr_providers/google_ml_kit_ocr.dart';
+import 'package:pr_alpr_watchmen/src/services/ocr_providers/opencv_tesseract.dart';
 
 import '../../blocs/user_finder_bloc/user_finder_event_handler.dart';
 import '../../models/camera_page_icon.dart';
@@ -13,7 +15,7 @@ import 'components/camera_screen_widget.dart';
 import 'components/error_popup.dart';
 
 class CameraPage extends StatefulWidget {
-  const CameraPage({Key? key}) : super(key: key);
+  const CameraPage({super.key});
 
   @override
   State<CameraPage> createState() => _CameraPageState();
@@ -43,21 +45,13 @@ class _CameraPageState extends State<CameraPage> {
             }
             if (state is SuccessfulProcess) {
               _cameraPageIcon = state.cameraPageIcon;
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(
-                          'Tiempo L'
-                              'ectura: ${state.t1}ms\r\nTiempo Ticket: ${state.t2}us')),
-                );
-              }
             }
           },
           builder: (context, state) {
             final cameraEventHandler =
                 CameraPageEventHandler(bloc: context.read<UserVehicleBloc>());
             return Stack(children: [
-              CameraWidget(cameraEventHandler: cameraEventHandler),
+              CameraWidget(cameraEventHandler: cameraEventHandler, ocrProvider: TesseractOCRProvider(),),
               _cameraPageIcon != null
                   ? _buildWarningMessageIcon()
                   : Container(),
